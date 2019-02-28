@@ -1,0 +1,6 @@
+[submodule "external/python-cmake-buildsystem"]
+	path = external/python-cmake-buildsystem
+	url = https://github.com/python-cmake-buildsystem/python-cmake-buildsystem
+[submodule "external/cython"]
+	path = external/cython
+	url = https://github.com/cython/cython
