@@ -5,7 +5,7 @@ set(GENC_DIR ${CMAKE_BINARY_DIR}/genc)
 
 add_subdirectory(external)
 
-# list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-# include(UseCython)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+include(UseCython)
 
 # add_subdirectory(src)
