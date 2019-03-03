@@ -1,1 +1,1 @@
-message(LOG "Testing.")
+message(STATUS "Test.")
