@@ -8,4 +8,4 @@ add_subdirectory(external)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include(UseCython)
 
-# add_subdirectory(src)
+add_subdirectory(src)

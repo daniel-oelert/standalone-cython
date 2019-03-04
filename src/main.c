@@ -5,6 +5,7 @@
 #elif PY_VERSION_HEX < 0x02060000 || (0x03000000 <= PY_VERSION_HEX && PY_VERSION_HEX < 0x03020000)
     #error Python 2.6+ or Python 3.2+ required.
 #else
+#endif
 #define CYTHON_ABI "0_23_4"
 #include <stddef.h>
 #ifndef offsetof
@@ -33,19 +34,25 @@ static int __sc_main(int argc, wchar_t **argv) {
 #endif
     if (argc && argv)
         Py_SetProgramName(argv[0]);
+    
+    #if PY_MAJOR_VERSION < 3
+        PyObject* PyInit_test1();
+        PyImport_AppendInittab("test1", PyInit_test1);
+    // #else
+    //     void inittest1();
+    //     PyImport_AppendInittab("test1", inittest1);
+    #endif
+    
+
     Py_Initialize();
     if (argc && argv)
         PySys_SetArgv(argc, argv);
     {
-      ${PY_MOBJECTS}
       PyObject* m = NULL;
-      //__pyx_module_is_main_test = 1;
       #if PY_MAJOR_VERSION < 3
-          ${PY2_INITS}
-          initmain();
+          initpymain();
       #else
-          ${PY3_INITS}
-          m = PyInit_main();
+          m = PyInit_pymain();
       #endif
       if (PyErr_Occurred()) {
           PyErr_Print();
@@ -54,7 +61,6 @@ static int __sc_main(int argc, wchar_t **argv) {
           #endif
           return 1;
       }
-      ${PY_MOBJECTS_DECREF}
       Py_XDECREF(m);
     }
     Py_Finalize();
