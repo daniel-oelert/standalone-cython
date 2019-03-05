@@ -91,12 +91,11 @@ static int __sc_main(int argc, wchar_t **argv) {
       Py_XDECREF(m);
     }
     Py_Finalize();
-    #if PY_MAJOR_VERSION < 3
+    
+    #if PY_MAJOR_VERSION < 3 || defined(WIN32) || defined(MS_WINDOWS)
     free(cwdbuff);
-    #elif defined(WIN32) || defined(MS_WINDOWS)
-    free(cwdbuff);
-    #else
     #endif
+
     return 0;
 }
 #if PY_MAJOR_VERSION >= 3 && !defined(WIN32) && !defined(MS_WINDOWS)
