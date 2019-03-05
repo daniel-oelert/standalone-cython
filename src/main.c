@@ -1,13 +1,34 @@
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
-#ifndef Py_PYTHON_H
-    #error Python headers needed to compile C extensions, please install development version of Python.
-#elif PY_VERSION_HEX < 0x02060000 || (0x03000000 <= PY_VERSION_HEX && PY_VERSION_HEX < 0x03020000)
-    #error Python 2.6+ or Python 3.2+ required.
-#else
-#endif
-#define CYTHON_ABI "0_23_4"
+
 #include <stddef.h>
+
+#include <stdio.h>  /* defines FILENAME_MAX */
+#if PY_MAJOR_VERSION < 3
+#if defined(_WIN32) || defined(_WIN64) || defined(MS_WINDOWS)
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
+#else
+#if defined(_WIN32) || defined(_WIN64) || defined(MS_WINDOWS)
+#include <direct.h>
+#define GetCurrentDir _wgetcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
+#endif
+
+#if PY_MAJOR_VERSION < 3
+char* cwdbuff;
+#else
+wchar_t* cwdbuff;
+#endif
+
+
 #ifndef offsetof
 #define offsetof(type, member) ( (size_t) & ((type*)0) -> member )
 #endif
@@ -17,8 +38,12 @@
 #endif
 #if PY_MAJOR_VERSION < 3
 int main(int argc, char** argv) {
+  cwdbuff = (char*)malloc(sizeof(char)*FILENAME_MAX);
+  GetCurrentDir(cwdbuff, FILENAME_MAX);
 #elif defined(WIN32) || defined(MS_WINDOWS)
 int wmain(int argc, wchar_t **argv) {
+  cwdbuff = (wchar_t*)malloc(sizeof(wchar_t)*FILENAME_MAX);
+  GetCurrentDir(cwdbuff, FILENAME_MAX);
 #else
 static int __sc_main(int argc, wchar_t **argv) {
 #endif
@@ -35,23 +60,25 @@ static int __sc_main(int argc, wchar_t **argv) {
     if (argc && argv)
         Py_SetProgramName(argv[0]);
     
-    #if PY_MAJOR_VERSION < 3
-        PyObject* PyInit_test1();
-        PyImport_AppendInittab("test1", PyInit_test1);
-    // #else
-    //     void inittest1();
-    //     PyImport_AppendInittab("test1", inittest1);
+    #if PY_MAJOR_VERSION > 2
+        PyObject* PyInit_greeter();
+        PyImport_AppendInittab("greeter", PyInit_greeter);
+    #else
+        void initgreeter();
+        PyImport_AppendInittab("greeter", initgreeter);
     #endif
     
-
+    Py_SetPythonHome(cwdbuff);
     Py_Initialize();
     if (argc && argv)
         PySys_SetArgv(argc, argv);
     {
       PyObject* m = NULL;
       #if PY_MAJOR_VERSION < 3
+          void initpymain();
           initpymain();
       #else
+          PyObject* PyInit_pymain();
           m = PyInit_pymain();
       #endif
       if (PyErr_Occurred()) {
@@ -64,6 +91,12 @@ static int __sc_main(int argc, wchar_t **argv) {
       Py_XDECREF(m);
     }
     Py_Finalize();
+    #if PY_MAJOR_VERSION < 3
+    free(cwdbuff);
+    #elif defined(WIN32) || defined(MS_WINDOWS)
+    free(cwdbuff);
+    #else
+    #endif
     return 0;
 }
 #if PY_MAJOR_VERSION >= 3 && !defined(WIN32) && !defined(MS_WINDOWS)
@@ -168,8 +201,13 @@ oom:
 }
 int
 main(int argc, char **argv)
-{
+{   
+    char* cwdcharbuff = (char*)malloc(sizeof(char)*FILENAME_MAX);
+    GetCurrentDir(cwdcharbuff, FILENAME_MAX);
+    cwdbuff = __util_char2wchar(cwdcharbuff);
     if (!argc) {
+        free(cwdcharbuff);
+        free(cwdbuff);
         return __sc_main(0, NULL);
     }
     else {
@@ -182,6 +220,8 @@ main(int argc, char **argv)
             free(argv_copy);
             free(argv_copy2);
             free(oldloc);
+            free(cwdcharbuff);
+            free(cwdbuff);
             return 1;
         }
         res = 0;
@@ -199,6 +239,8 @@ main(int argc, char **argv)
         }
         free(argv_copy);
         free(argv_copy2);
+        free(cwdcharbuff);
+        free(cwdbuff);
         return res;
     }
 }

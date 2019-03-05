@@ -15,6 +15,9 @@
 
 # add_pyx(pymain.pyx)
 
-add_executable(main main.c pymain.c test.c)
+add_library(cythonfiles OBJECT pymain.c greeter.c)
+target_include_directories(cythonfiles PRIVATE ${CMAKE_SOURCE_DIR}/build/external/Python-3.6.7/Include ${CMAKE_SOURCE_DIR}/build/external/python-cmake-buildsystem/bin)
+
+add_executable(main main.c $<TARGET_OBJECTS:cythonfiles>)
 target_link_libraries(main PRIVATE libpython-static)
 target_include_directories(main PRIVATE ${CMAKE_SOURCE_DIR}/build/external/Python-3.6.7/Include ${CMAKE_SOURCE_DIR}/build/external/python-cmake-buildsystem/bin)
